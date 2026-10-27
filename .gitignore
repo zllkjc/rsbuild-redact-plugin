@@ -1,0 +1,10 @@
+node_modules/
+dist/
+**/dist-*/
+**/.modern-js/
+**/.rsbuild/
+**/modern-js-env.d.ts
+*.tgz
+.DS_Store
+.env*
+test-results/

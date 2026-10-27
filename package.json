@@ -1,0 +1,56 @@
+{
+  "name": "rsbuild-redact-plugin",
+  "version": "0.1.0",
+  "description": "Use TanStack Redact as the browser React runtime in Rsbuild and Modern.js.",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": { "types": "./dist/index.d.ts", "default": "./dist/index.js" },
+      "require": { "types": "./dist/index.d.cts", "default": "./dist/index.cjs" }
+    },
+    "./package.json": "./package.json"
+  },
+  "files": ["dist", "README.md", "LICENSE"],
+  "sideEffects": false,
+  "engines": { "node": "^20.19.0 || >=22.12.0" },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm,cjs --dts --clean",
+    "typecheck": "tsc --noEmit",
+    "test": "npm run build && node --test tests/*.test.mjs",
+    "bench": "node scripts/benchmark.mjs",
+    "test:browser": "node scripts/browser.mjs",
+    "test:dev": "node scripts/dev.mjs",
+    "test:package": "npm run build && node scripts/package-smoke.mjs",
+    "prepack": "npm run build"
+  },
+  "peerDependencies": {
+    "@rsbuild/core": "^2.2.13",
+    "@tanstack/redact": "~0.2.1",
+    "react": "^19.0.0"
+  },
+  "devDependencies": {
+    "@modern-js/app-tools": "3.10.3",
+    "@modern-js/runtime": "3.10.3",
+    "@rsbuild/core": "2.2.14",
+    "@rsbuild/plugin-react": "2.1.1",
+    "@tanstack/redact": "0.2.1",
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "playwright": "^1.56.0",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.0"
+  },
+  "repository": { "type": "git", "url": "git+https://github.com/zllkjc/rsbuild-redact-plugin.git" },
+  "homepage": "https://github.com/zllkjc/rsbuild-redact-plugin#readme",
+  "bugs": { "url": "https://github.com/zllkjc/rsbuild-redact-plugin/issues" },
+  "keywords": ["rsbuild", "rspack", "redact", "react", "modernjs", "plugin"],
+  "license": "MIT",
+  "publishConfig": { "access": "public", "registry": "https://registry.npmjs.org" },
+  "packageManager": "pnpm@10.19.0"
+}

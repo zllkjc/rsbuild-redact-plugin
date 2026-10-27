@@ -1,0 +1,95 @@
+{
+  "date": "2026-10-27T06:17:19.302Z",
+  "system": {
+    "platform": "darwin",
+    "arch": "arm64",
+    "cpu": "Apple M5 Pro",
+    "node": "v24.21.0"
+  },
+  "versions": {
+    "@modern-js/app-tools": "3.10.3",
+    "@modern-js/runtime": "3.10.3",
+    "@rsbuild/core": "2.2.14",
+    "@rsbuild/plugin-react": "2.1.1",
+    "@tanstack/redact": "0.2.1",
+    "@types/node": "24.19.2",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "playwright": "1.64.1",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "tsup": "8.5.1",
+    "typescript": "5.9.3"
+  },
+  "methodology": "CSR in both frameworks. Persistent build cache disabled. One unrecorded warm-up per variant, then alternating sequential clean builds. Wall time includes CLI startup. Gzip/Brotli sum separately compressed browser JS assets, including lazy chunks.",
+  "results": {
+    "rsbuild": {
+      "react": {
+        "buildsMs": [
+          280.8389169999999,
+          273.41420800000014,
+          276.1172919999999,
+          271.0676669999998,
+          275.235584
+        ],
+        "raw": 223420,
+        "gzip": 71238,
+        "brotli": 60479,
+        "files": 3,
+        "nativeReactModules": 10,
+        "redactModules": 0,
+        "medianBuildMs": 275.235584
+      },
+      "redact": {
+        "buildsMs": [
+          269.7183329999999,
+          260.69162499999993,
+          257.0904169999999,
+          263.271291,
+          259.107125
+        ],
+        "raw": 64024,
+        "gzip": 25167,
+        "brotli": 22520,
+        "files": 3,
+        "nativeReactModules": 0,
+        "redactModules": 72,
+        "medianBuildMs": 260.69162499999993
+      }
+    },
+    "modern": {
+      "react": {
+        "buildsMs": [
+          958.9830420000008,
+          934.323875,
+          947.1041669999995,
+          920.3053329999984,
+          918.6363330000004
+        ],
+        "raw": 340552,
+        "gzip": 110461,
+        "brotli": 95221,
+        "files": 7,
+        "nativeReactModules": 10,
+        "redactModules": 0,
+        "medianBuildMs": 934.323875
+      },
+      "redact": {
+        "buildsMs": [
+          907.0356670000001,
+          920.476917,
+          894.6391669999994,
+          899.3454999999994,
+          904.1726669999989
+        ],
+        "raw": 184566,
+        "gzip": 65502,
+        "brotli": 58300,
+        "files": 6,
+        "nativeReactModules": 0,
+        "redactModules": 73,
+        "medianBuildMs": 904.1726669999989
+      }
+    }
+  }
+}

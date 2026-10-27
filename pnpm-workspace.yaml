@@ -1,0 +1,6 @@
+packages:
+  - examples/rsbuild
+  - examples/modern
+onlyBuiltDependencies:
+  - '@swc/core'
+  - esbuild

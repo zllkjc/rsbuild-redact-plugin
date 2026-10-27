@@ -1,0 +1,8 @@
+{
+  "name": "redact-rsbuild-example",
+  "private": true,
+  "type": "module",
+  "scripts": { "dev": "rsbuild dev", "build": "rsbuild build", "preview": "rsbuild preview" },
+  "dependencies": { "@tanstack/redact": "0.2.1", "react": "19.3.1", "react-dom": "19.3.1" },
+  "devDependencies": { "@rsbuild/core": "2.2.14", "@rsbuild/plugin-react": "2.1.1" }
+}

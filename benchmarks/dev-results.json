@@ -1,0 +1,19 @@
+{
+  "date": "2026-10-27T06:21:03.843Z",
+  "results": [
+    {
+      "framework": "rsbuild",
+      "runtime": "redact",
+      "render": true,
+      "fastRefresh": true,
+      "preservedState": true
+    },
+    {
+      "framework": "modern",
+      "runtime": "redact",
+      "render": true,
+      "fastRefresh": true,
+      "preservedState": true
+    }
+  ]
+}
