@@ -4,89 +4,72 @@ const build = JSON.parse(await readFile(new URL('../benchmarks/build-results.jso
 const browser = JSON.parse(await readFile(new URL('../benchmarks/browser-results.json', import.meta.url), 'utf8'));
 const percent = (a, b) => `${(100 * (b / a - 1)).toFixed(1)}%`;
 const sizeRows = Object.entries(build.results).map(([name, { react, redact }]) =>
-  `| ${name} | ${(react.raw / 1000).toFixed(1)} → ${(redact.raw / 1000).toFixed(1)} KB | ${(react.gzip / 1000).toFixed(2)} → ${(redact.gzip / 1000).toFixed(2)} KB | ${percent(react.gzip, redact.gzip)} | ${(react.brotli / 1000).toFixed(2)} → ${(redact.brotli / 1000).toFixed(2)} KB |`,
+  `| ${name} | ${(react.gzip / 1000).toFixed(2)} KB | ${(redact.gzip / 1000).toFixed(2)} KB | ${percent(react.gzip, redact.gzip)} |`,
 ).join('\n');
-const buildRows = Object.entries(build.results).map(([name, { react, redact }]) =>
-  `| ${name} | ${react.medianBuildMs.toFixed(1)} ms | ${redact.medianBuildMs.toFixed(1)} ms | ${percent(react.medianBuildMs, redact.medianBuildMs)} |`,
-).join('\n');
-const labels = { medianCounterMs: '20 次同步计数更新', medianReverseMs: '20 次 1,000 行列表反转', medianClickCommitMs: '单次点击处理开始到 DOM 提交' };
+const labels = {
+  medianCounterMs: '20 次同步计数更新',
+  medianReverseMs: '20 次 1,000 行列表反转',
+  medianClickCommitMs: '单次点击处理器开始到 layout effect',
+};
 const runtimeRows = Object.entries(browser.results).flatMap(([name, { react, redact }]) =>
   Object.entries(labels).map(([key, label]) => `| ${name} / ${label} | ${react[key].toFixed(2)} ms | ${redact[key].toFixed(2)} ms | ${percent(react[key], redact[key])} |`),
 ).join('\n');
+const buildSummary = Object.entries(build.results).map(([name, { react, redact }]) =>
+  `${name} ${react.medianBuildMs.toFixed(1)} → ${redact.medianBuildMs.toFixed(1)} ms`,
+).join('；');
 
-const report = `# Rsbuild / Modern.js：React 与 Redact 实测
+const report = `# 性能报告
 
-测试日期：2026-10-27。插件版本：0.1.0。**发布范围为 CSR，SSR 未通过兼容验证。**
-
-最确定的收益是浏览器下载体积减少。渲染耗时取决于具体任务，不能把体积收益解释为所有交互更快。Redact 采用同步渲染，没有 React 的并发调度、时间切片和可中断渲染。
-
-## 环境与方法
-
-- 机器：${build.system.cpu}，${build.system.platform}/${build.system.arch}，Node ${build.system.node}。
-- React / ReactDOM ${build.versions.react}；Redact ${build.versions['@tanstack/redact']}；Rsbuild ${build.versions['@rsbuild/core']}；Modern.js ${build.versions['@modern-js/app-tools']}（内部使用 Rsbuild 2.2.13）；Chromium ${browser.browser}。
-- 两组均使用生产构建、相同的共享页面、相同依赖和构建配置，只切换插件。两框架均为 CSR；Modern.js 额外包含文件路由。
-- 页面包含 1,000 行 keyed 列表、state、memo + Context、受控表单、lazy/Suspense 与 Portal。插件使用默认功能配置，关闭上游实验性原生 ViewTransition 动画；没有使用删减语义的 nano 模式。
-- 构建：关闭持久缓存，每个变体先预热一次，再交替执行 5 次独立 CLI 构建。表中是中位数；文件系统/操作系统缓存没有清空。耗时包含 CLI 启动。
-- 体积：统计全部浏览器 JavaScript，包括懒加载模块和路由块；不含 HTML、CSS、source map、license 文本或服务端代码。各文件分别压缩后求和，KB = 1,000 bytes，不代表单页首屏实际下载量。
-- 浏览器：同一 Chromium 进程，按相反顺序交替创建 7 组独立 context；每项先预热 5 个 batch，再采集 20 个 batch，每个 batch 完成 20 次 flushSync 更新。表中取每组中位数的中位数。另测每组 20 次实际点击的处理器开始到 layout effect 提交耗时。
-- 浏览器未限速，只有一个机器和一种浏览器。没有做统计显著性检验，不把小差异当成确定收益。同步微基准不代表并发输入体验、首屏、绘制、INP、内存或服务端吞吐。
+同一份页面分别使用原生 React 和 Redact，测试日期为 ${browser.date.slice(0, 10)}。两套框架均采用生产 CSR 构建。
 
 ## 浏览器 JS 体积
 
-箭头为 React → Redact，变化为 Redact 相对 React。
+统计全部浏览器 JS（包含懒加载与路由块）逐文件 gzip 后的总量，不代表首屏实际下载量。变化为 Redact 相对 React，负数表示减少。
 
-| 框架 | 原始 JS | gzip | gzip 变化 | Brotli |
-| --- | --- | --- | --- | --- |
+| 框架 | React | Redact | 变化 |
+| --- | ---: | ---: | ---: |
 ${sizeRows}
 
-模块图检查确认：React 基线含原生 React，不含 Redact；Redact 变体含 Redact，不含原生 React/ReactDOM/scheduler。所有检查都会在不满足时终止脚本。
+模块图检查确认：React 基线不含 Redact，Redact 构建不含原生 React/ReactDOM/scheduler。
 
-## 构建耗时
-
-| 框架 | React 中位数 | Redact 中位数 | 变化 |
-| --- | --- | --- | --- |
-${buildRows}
-
-这些微小示例的构建时间不足一秒，CLI 启动占比很大；不能由此推断大型项目的构建加速比例。
-
-## 浏览器运行耗时
-
-负数表示该任务耗时减少，正数表示增加。计数更新也会重新计算父组件中的 1,000 行列表，因此不是孤立的 useState 成本。
+## 交互耗时
 
 | 框架 / 任务 | React | Redact | 变化 |
-| --- | --- | --- | --- |
+| --- | ---: | ---: | ---: |
 ${runtimeRows}
 
-## 正确性与开发体验
+计数状态和列表位于同一个组件，计数更新会重新计算列表。每批 20 次更新分别使用 flushSync；点击计时结束于 useLayoutEffect 开始，不包含后续绘制，也不是 INP。
 
-- 两个框架 × 两个运行时 × 7 组生产浏览器检查通过：渲染、state、穿过 memo 的 Context、输入回显、keyed DOM 复用、懒加载/Suspense、Portal；无浏览器运行异常或 console error。
-- Modern.js 额外通过客户端跳转、直接访问二级路由、返回首页；跳转保留窗口标记，确认没有整页刷新。
-- 两个框架的 Redact 开发模式通过 Fast Refresh：修改组件标题后计数状态保留，窗口未刷新。
-- TypeScript 类型检查、配置行为测试与独立 npm tarball 安装/构建验证均通过。
+体积更小，完整反转更快，计数与点击更慢。三项差异的 React / Redact 实现解释见 [源码原因](./ANALYSIS.md)。
 
-## SSR 尝试与明确限制
+构建中位数为 ${buildSummary}，包含 CLI 启动。示例耗时不足一秒，小差异不足以推断大型项目的构建收益。
 
-初始尝试采用原生 React SSR + Redact hydration。构建通过、HTML 包含完整列表、页面能交互，但服务端 DOM 被重建。useId 造成 label/htmlFor 不一致，加入上游 React ID 策略仍未解决。详见 [SSR 调查记录](./SSR-NOTES.md)。
+## 测试条件
 
-因此发布版本只支持 CSR，检测到同一构建内混合浏览器和 Node 环境时直接报错。没有宣称 SSR、Streaming、Server Actions、RSC 或 React Compiler 全面兼容。SSR 失败实验不计入上面的 CSR 性能数字。
+- ${build.system.cpu}，${build.system.platform}/${build.system.arch}，Node ${build.system.node}，Chromium ${browser.browser}。
+- React ${build.versions.react}、Redact ${build.versions['@tanstack/redact']}、Rsbuild ${build.versions['@rsbuild/core']}、Modern.js ${build.versions['@modern-js/app-tools']}。
+- 页面包含 1,000 行 keyed 列表、Context、受控输入、lazy/Suspense 和 Portal；Modern.js 额外包含路由。
+- 关闭持久构建缓存。构建预热后交替执行 5 次；浏览器每个变体测 7 个独立 context，每项预热 5 批、采集 20 批，另测 20 次点击。表中为各组中位数的中位数。
+- 单机、单浏览器、未 CPU 限速，没有统计显著性检验；结果不能推广为所有应用的性能保证。
 
 ## 复现
 
+安装锁文件依赖后，按顺序运行：
+
 ${'```'}sh
-pnpm install --frozen-lockfile
-pnpm test
-pnpm typecheck
+pnpm build
 pnpm exec playwright install chromium
 pnpm bench
 pnpm test:browser
-pnpm test:dev
-pnpm test:package
 node scripts/report.mjs
+
+# 单独复现源码归因实验
+node scripts/investigate.mjs
 ${'```'}
 
-按顺序执行；dev 测试会短暂编辑共享组件并在 finally 中还原。CI 使用缩小的轮数进行功能验证，不作为性能结论来源。
+不要并行执行开发模式测试：它会临时编辑共享组件，开发构建也可能覆盖示例的生产输出。CI 使用缩减轮数验证功能，不作为性能结论来源。
 
-原始记录：[构建](./build-results.json)、[浏览器各组和每次采样](./browser-results.json)、[开发模式](./dev-results.json)。
+原始数据：[构建及体积](./build-results.json)、[浏览器采样](./browser-results.json)、[归因实验](./investigation-results.json)。功能与开发验证见 [开发记录](../DEVELOPMENT.md)，SSR 限制见 [SSR 记录](./SSR-NOTES.md)。
 `;
 await writeFile(new URL('../benchmarks/REPORT.md', import.meta.url), report);
-console.log(report);
+console.log('Updated benchmarks/REPORT.md');

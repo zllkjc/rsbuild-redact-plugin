@@ -1,23 +1,21 @@
-# Modern.js SSR investigation
+# SSR 兼容性记录
 
-Tested on 2026-10-27 with Modern.js 3.10.3, React 19.3.1 and Redact 0.2.1 (upstream source inspected at `20f6dd6bf2dda0c52c3d5670ba6be5f0991bf8ff`).
+本次测试使用 Modern.js 3.10.3、React 19.3.1 和 Redact 0.2.1。
 
-The initial integration kept the Node environment on native React and replaced only browser imports. The Modern.js fixture used `server.ssr: true`. Both variants built successfully, and all eight emitted server JavaScript bundles were byte-identical. HTML responses contained all 1,000 rows.
+## 尝试与结果
 
-However, a browser test captured the server-rendered counter node before hydration and compared it with the hydrated node. Native React preserved it; Redact replaced it. The page looked correct and interactive, so a screenshot or a successful build alone would have missed this failure.
+服务端保留原生 React，浏览器改用 Redact。生产构建通过，HTML 包含完整列表，页面可以交互；但 hydration 后服务端 DOM 被重建，未通过节点复用检查。
 
-The detailed development diagnostic was `Hydration mismatch on <label> for "htmlFor".` The shared component uses `useId` to connect a label and input. We also tried a small `react-dom/client` adapter forwarding `identifierStrategy: 'react'`, as used by Redact's upstream native React server integrations. In this fixture, the server generated `_modern-js-R_4l_`, while Redact's initial hydration generated `_modern-js-R_15_`. Recovery then rendered `_modern-js-r_0_` and replaced the server DOM. That adapter did not resolve the problem and is not shipped.
+错误定位到 `useId` 生成的 label/input 关联：服务端得到 `_modern-js-R_4l_`，Redact 首次 hydration 得到 `_modern-js-R_15_`，触发 `htmlFor` 不一致。尝试上游的 `identifierStrategy: 'react'` 后仍未解决，临时适配代码没有保留。
 
-This establishes an incompatibility for the tested tree; it does not establish that every Redact hydration scenario fails, or that a general ID-mapping workaround would be correct. The plugin does not patch framework internals, suppress the mismatch, or claim SSR compatibility.
+## 当前处理
 
-Version 0.1 therefore supports **CSR only** and rejects eligible browser builds when the same normalized Rsbuild configuration also has a Node target. Server-only and excluded RSC environments are left unchanged. Independently built servers cannot always be detected; do not use this version for SSR applications.
-
-To exercise the guard:
+0.1.0 仅支持 CSR。同一次配置中出现浏览器和 Node 构建时，插件直接报错；独立构建的服务端无法完全检测，也不属于支持范围。
 
 ```sh
 pnpm build
 SSR=1 pnpm --dir examples/modern build
-# Expected: build fails with "This release supports client-side rendering only."
+# 预期报错：This release supports client-side rendering only.
 ```
 
-The published size/performance comparison uses CSR in **both** runtime variants and is not an SSR benchmark. Restoring SSR support requires a real compatibility fix plus DOM reuse, `useId`, streaming and navigation regression tests.
+该结论针对本次页面，不代表所有 Redact hydration 场景都失败。后续恢复 SSR 支持，需要实际修复并验证 DOM 复用、useId、流式渲染和导航。性能报告中的两边均为 CSR。
