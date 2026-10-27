@@ -1,10 +1,8 @@
 import { spawn } from 'node:child_process';
 import { setTimeout } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
-import { resolve } from 'node:path';
 
 export const root = fileURLToPath(new URL('../', import.meta.url));
-export const median = values => [...values].sort((a, b) => a - b)[Math.floor(values.length / 2)];
 export function command(args, { cwd = root, env = {} } = {}) {
   return new Promise((ok, fail) => {
     const child = spawn('pnpm', args, { cwd, env: { ...process.env, ...env }, stdio: 'inherit' });
@@ -38,4 +36,3 @@ export async function startServer(framework, runtime, port, dev = false) {
     throw new Error(`Server did not start: ${output}`);
   } catch (error) { await stop(); throw error; }
 }
-export const distPath = (framework, runtime) => resolve(root, `examples/${framework}/dist-${runtime}`);

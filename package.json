@@ -20,7 +20,6 @@
     "build": "tsup src/index.ts --format esm,cjs --dts --clean",
     "typecheck": "tsc --noEmit",
     "test": "npm run build && node --test tests/*.test.mjs",
-    "bench": "node scripts/benchmark.mjs",
     "test:browser": "node scripts/browser.mjs",
     "test:dev": "node scripts/dev.mjs",
     "test:package": "npm run build && node scripts/package-smoke.mjs",

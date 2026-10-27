@@ -1,10 +1,9 @@
 import { defineConfig } from '@rsbuild/core';
 import { pluginReact } from '@rsbuild/plugin-react';
 import { pluginRedact } from '../../dist/index.js';
-import { captureModules } from '../../scripts/capture-modules.mjs';
 
 export default defineConfig({
-  plugins: [pluginReact(), pluginRedact({ enabled: process.env.RUNTIME !== 'react' }), captureModules()],
+  plugins: [pluginReact(), pluginRedact({ enabled: process.env.RUNTIME !== 'react' })],
   source: { entry: { index: './src/index.tsx' } },
   output: { distPath: { root: `dist-${process.env.RUNTIME ?? 'redact'}` }, polyfill: 'off' },
   html: { title: 'Rsbuild · React / Redact' },

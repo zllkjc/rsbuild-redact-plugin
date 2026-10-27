@@ -1,5 +1,5 @@
-import { createContext, lazy, memo, Suspense, useContext, useEffect, useId, useLayoutEffect, useRef, useState, version } from 'react';
-import { createPortal, flushSync } from 'react-dom';
+import { createContext, lazy, memo, Suspense, useContext, useId, useState } from 'react';
+import { createPortal } from 'react-dom';
 import './style.css';
 
 const CountContext = createContext(0);
@@ -14,35 +14,13 @@ export default function App() {
   const [showLazy, setShowLazy] = useState(false);
   const [showPortal, setShowPortal] = useState(false);
   const inputId = useId();
-  const clickStart = useRef(0);
-  useLayoutEffect(() => {
-    if (clickStart.current) {
-      (window as any).__lastCommitMs = performance.now() - clickStart.current;
-      clickStart.current = 0;
-    }
-  }, [count]);
-  useEffect(() => {
-    (window as any).__bench = {
-      version,
-      run(kind: 'counter' | 'reverse', iterations = 20) {
-        const start = performance.now();
-        for (let i = 0; i < iterations; i++) {
-          flushSync(() => kind === 'counter'
-            ? setCount(value => value + 1)
-            : setRows(value => [...value].reverse()));
-        }
-        return performance.now() - start;
-      },
-    };
-    return () => { delete (window as any).__bench; };
-  }, []);
   return <CountContext.Provider value={count}>
     <main>
       <p className="eyebrow">RSBUILD × TANSTACK REDACT</p>
       <h1>Same components. Different runtime.</h1>
       <p>Hooks, context, controlled forms, lazy modules, portals and 1,000 keyed rows.</p>
       <section className="controls">
-        <button data-testid="increment" onClick={() => { clickStart.current = performance.now(); setCount(value => value + 1); }}>Increment</button>
+        <button data-testid="increment" onClick={() => setCount(value => value + 1)}>Increment</button>
         <strong data-testid="count">{count}</strong>
         <span>Context: <ContextCount /></span>
         <button data-testid="reverse" onClick={() => setRows(value => [...value].reverse())}>Reverse rows</button>
