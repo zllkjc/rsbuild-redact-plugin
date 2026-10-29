@@ -1,7 +1,7 @@
 {
   "name": "rsbuild-redact-plugin",
-  "version": "0.1.0",
-  "description": "Use TanStack Redact as the browser React runtime in Rsbuild and Modern.js.",
+  "version": "0.2.0",
+  "description": "Use TanStack Redact as the React runtime in Rsbuild and Modern.js, with opt-in SSR mapping.",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
