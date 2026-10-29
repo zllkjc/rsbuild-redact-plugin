@@ -7,8 +7,10 @@ export interface RedactPluginOptions {
   enabled?: boolean;
   /** Resolve the app's Redact installation from this directory. */
   resolveFrom?: string;
-  /** Only apply to these named browser environments. Mixed browser/server builds are rejected. */
+  /** Only apply to these named environments (browser-only unless ssr is enabled). */
   environments?: readonly string[];
+  /** Opt into matching browser/server Redact runtimes. Requires Redact SSR fixes. Default: false. */
+  ssr?: boolean;
   /** Enable experimental native ViewTransition animations. Default: false, as in Redact's Vite plugin. */
   viewTransitions?: boolean;
 }
@@ -37,7 +39,7 @@ const aliases: Record<string, string> = {
   'use-sync-external-store/shim/with-selector.js': '@tanstack/redact',
 };
 
-/** Keep normal React imports and JSX transforms; replace only the browser runtime. */
+/** Keep normal React imports and JSX transforms; replace the selected environments' runtime. */
 export function pluginRedact(options: RedactPluginOptions = {}): RsbuildPlugin {
   return {
     name: 'rsbuild-redact-plugin',
@@ -48,15 +50,15 @@ export function pluginRedact(options: RedactPluginOptions = {}): RsbuildPlugin {
         handler(config, { environment, rspack }) {
           const name = environment.name;
           if (
-            environment.config.output.target !== 'web' ||
+            (!options.ssr && environment.config.output.target !== 'web') ||
             /(^|[-_:])rsc($|[-_:])/i.test(name) ||
             config.resolve?.conditionNames?.includes('react-server') ||
             (options.environments && !options.environments.includes(name))
           ) return;
 
           const environments = api.getNormalizedConfig().environments;
-          if (Object.values(environments).some(item => item.output.target === 'node')) {
-            throw new Error('[rsbuild-redact-plugin] This release supports client-side rendering only. Mixed browser/server builds are not supported: Redact 0.2.1 can rebuild native React SSR markup when useId differs. Disable server.ssr in Modern.js, or remove pluginRedact from the SSR application.');
+          if (!options.ssr && Object.values(environments).some(item => item.output.target === 'node')) {
+            throw new Error('[rsbuild-redact-plugin] By default, this plugin supports client-side rendering only. Mixed browser/server builds can rebuild native React SSR markup when useId differs. Use pluginRedact({ ssr: true }) only with Redact SSR fixes, disable server.ssr in Modern.js, or remove pluginRedact from the SSR application.');
           }
 
           const require = createRequire(resolve(options.resolveFrom ?? api.context.rootPath, 'package.json'));
